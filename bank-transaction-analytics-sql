@@ -1,0 +1,115 @@
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    email VARCHAR(100),
+    city VARCHAR(50)
+);
+
+CREATE TABLE accounts (
+    account_id INT PRIMARY KEY,
+    customer_id INT,
+    account_type VARCHAR(20),
+    balance DECIMAL(12,2),
+    FOREIGN KEY (customer_id)
+    REFERENCES customers(customer_id)
+);
+
+CREATE TABLE transactions (
+    transaction_id INT PRIMARY KEY,
+    account_id INT,
+    transaction_type VARCHAR(20),
+    amount DECIMAL(12,2),
+    transaction_date DATE,
+    FOREIGN KEY (account_id)
+    REFERENCES accounts(account_id)
+);
+
+CREATE TABLE loans (
+    loan_id INT PRIMARY KEY,
+    customer_id INT,
+    loan_amount DECIMAL(12,2),
+    approval_status VARCHAR(20),
+    FOREIGN KEY (customer_id)
+    REFERENCES customers(customer_id)
+);
+
+INSERT INTO customers VALUES
+(101, 'Ethan', 'Nicolas', 'ethan@email.com', 'NYC'),
+(102, 'Chris', 'Paul', 'chris@email.com', 'LA'),
+(103, 'James', 'Knight', 'james@email.com', 'Chicago');
+
+INSERT INTO accounts VALUES
+(1001, 101, 'checking', 5000.00),
+(1002, 101, 'savings', 12000.00),
+(1003, 102, 'checking', 3000.00),
+(1004, 103, 'checking', 800.00);
+
+INSERT INTO transactions VALUES
+(1, 1001, 'deposit', 3000, '2026-01-01'),
+(2, 1001, 'withdrawal', 400, '2026-01-03'),
+(3, 1002, 'purchase', 900, '2026-01-04'),
+(4, 1003, 'deposit', 8000, '2026-01-05');
+
+
+INSERT INTO loans VALUES
+(1, 101, 10000, 'pending'),
+(2, 102, 5000, 'approved'),
+(3, 103, 2000, 'rejected');
+
+
+
+SELECT * FROM customers;
+SELECT * FROM accounts;
+
+
+SELECT * FROM transactions;
+
+
+SELECT 
+    c.first_name,
+    c.last_name,
+    SUM(t.amount) AS total_spent
+FROM customers c
+JOIN accounts a
+    ON c.customer_id = a.customer_id
+JOIN transactions t
+    ON a.account_id = t.account_id
+WHERE t.transaction_type = 'purchase'
+GROUP BY c.customer_id, c.first_name, c.last_name
+ORDER BY total_spent DESC;
+
+
+
+SELECT *
+FROM transactions
+WHERE amount > 5000;
+
+
+SELECT account_id,
+       COUNT(*) AS suspicious_count
+FROM transactions
+WHERE amount > 5000
+GROUP BY account_id
+HAVING COUNT(*) > 1;
+
+
+
+SELECT 
+    c.first_name,
+    a.balance,
+    CASE
+        WHEN a.balance > 5000 THEN 'Eligible'
+        ELSE 'Not Eligible'
+    END AS loan_status
+FROM customers c
+JOIN accounts a
+    ON c.customer_id = a.customer_id;
+
+
+SELECT *
+FROM accounts
+WHERE balance > (
+    SELECT AVG(balance)
+    FROM accounts
+);
